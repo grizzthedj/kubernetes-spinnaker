@@ -24,3 +24,4 @@ This assumes that you already the following things setup, and in working order, 
     3. **Jenkins:** Enter the password for the Jenkins user.
 9. To provide Spinnaker access to deploy containers into a specific namespace, run `./permit-namespace.sh "namespace_name"` from the halyard container. (**NOTE:** This is only works for a single namespace. More roles/rolebindings .yml would have to be created if Spinnaker needs access to deploy to more than one namespace)
 10. Expose the Spinnaker dashboard(Deck) by running `./expose-deck.sh` from the Kubernetes master.
+11. Access the Spinnaker dashboard at http://localhost:9000
