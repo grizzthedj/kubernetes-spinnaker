@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: halyard-volume
+  namespace: spinnaker
+  labels: 
+    env: local
+spec:
+  storageClassName: halyard-class
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 100Mi
+  nfs: 
+    server: 10.100.99.63
+    path: /var/nfs/k8s/halyard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: halyard-volume-claim
+  namespace: spinnaker
+spec:
+  storageClassName: halyard-class
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Mi
+status: {}
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: halyard
+  namespace: spinnaker
+  labels:
+    app: halyard
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: halyard
+    spec:
+      containers:
+      - image: gcr.io/spinnaker-marketplace/halyard:stable
+        name: halyard
+        resources: {}
+        volumeMounts:
+        - mountPath: /root
+          name: halyard-volume
+      restartPolicy: Always
+      volumes:
+      - name: halyard-volume
+        persistentVolumeClaim:
+          claimName: halyard-volume-claim
+      restartPolicy: Always
+status: {}

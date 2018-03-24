@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: minio-data
+  namespace: spinnaker
+spec:
+  storageClassName: minio-class
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 25Gi
+  nfs: 
+    server: <NFS_IP_ADDRESS>
+    path: /var/nfs/k8s/spinnaker
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pv-claim
+  namespace: spinnaker
+  labels:
+    app: minio-storage-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 25Gi
+  storageClassName: minio-class
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: minio-deployment
+  namespace: spinnaker
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      volumes:
+      - name: minio-data
+        persistentVolumeClaim:
+          claimName: minio-pv-claim
+      containers:
+      - name: minio
+        image: minio/minio
+        args:
+        - server
+        - "--address" 
+        - ":9001"
+        - /storage
+        env:
+        - name: MINIO_ACCESS_KEY
+          value: "spinnaker-minio"
+        - name: MINIO_SECRET_KEY
+          value: "Test1234"
+        ports:
+        - containerPort: 9001
+          hostPort: 9001
+        volumeMounts:
+        - name: minio-data 
+          mountPath: "/storage"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-service
+  namespace: spinnaker
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 9001
+      targetPort: 9001
+      protocol: TCP
+  selector:
+    app: minio
